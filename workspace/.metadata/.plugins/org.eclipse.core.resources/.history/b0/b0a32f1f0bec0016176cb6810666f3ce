@@ -1,0 +1,356 @@
+package cs56pa2;
+
+import java.awt.image.ConvolveOp;
+import java.io.BufferedReader;
+
+import java.io.FileNotFoundException;
+
+import java.io.FileReader;
+
+import java.io.IOException;
+
+import java.io.InputStream;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Hashtable;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.TreeMap;
+
+import javax.sound.midi.VoiceStatus;
+import javax.swing.text.StyledEditorKit.ForegroundAction;
+import javax.xml.ws.Holder;
+
+import org.omg.PortableServer.ServantActivator;
+
+
+public class HotWordsAnalyzer {
+
+    
+
+    // count returns the total number of hot words in the document
+
+    
+    public static HashMap<String, Integer> hotWordFrequency = new HashMap<String, Integer>();
+    
+    public static HashMap<String, String> hotWordOriginal = new HashMap<String, String>();
+    
+    public static List<String> docFile = new ArrayList<>();
+    
+    public static List<String> hotWordsInDocFile = new ArrayList<>();
+    
+    
+    
+    public HotWordsAnalyzer (String hotWordsFileName, String docFileName) throws IOException {
+
+        Scanner input = new Scanner(System.in);
+
+        FileReader fileReader = new FileReader(hotWordsFileName);
+
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+        String thisLine = null;
+
+        
+
+        // read in the file of hot words and store them in a hash table.
+
+        
+
+        while ((thisLine = bufferedReader.readLine()) != null) {
+
+            if (thisLine.length() != 0 && hotWordFrequency.get(thisLine) == null) {
+
+                hotWordFrequency.put(thisLine.toLowerCase(), 0);
+                hotWordOriginal.put(thisLine.toLowerCase(), thisLine);
+
+            }
+
+        }
+        
+        bufferedReader.close();
+        fileReader.close();
+        
+
+        // read in the doc file and store all the words in an array of strings.
+
+        fileReader = new FileReader(docFileName);
+
+        bufferedReader = new BufferedReader(fileReader);
+
+        
+
+        thisLine = null;
+
+        while ((thisLine = bufferedReader.readLine()) != null) {
+
+            thisLine.replaceAll("[\\s+,+.+:+;+(+)+\\n+\'+\"+]+", "!");
+
+            for (String w: thisLine.split("[\\s+,+\\.+:+;+(+)+\\n+\\'+\\\"+]+",0)) {
+
+                if (w.length() > 0)
+
+                    docFile.add(w);
+
+            }
+
+        }
+        
+        bufferedReader.close();
+        fileReader.close();
+        
+
+        //test reading the hot words
+        
+        System.out.println(hotWordFrequency);
+        
+        // test reading the doc file
+
+
+    }
+
+    
+
+    public int count() {
+
+        int numHotWords = 0;
+        
+        for (String w : docFile) {
+            
+            if (hotWordFrequency.containsKey(w.toLowerCase()) == true)
+                numHotWords++;
+            
+        }
+
+        return numHotWords;
+
+    }
+    
+    private void calculateFrequency() {
+        for (String w : docFile) {
+            
+            if (hotWordFrequency.containsKey(w.toLowerCase()) == true)
+                hotWordFrequency.replace(w.toLowerCase(), hotWordFrequency.get(w.toLowerCase()), hotWordFrequency.get(w.toLowerCase())+1);
+            
+        }
+    }
+    
+    private void extractHotWords() {
+        if (hotWordsInDocFile.size() != 0)
+            return;
+        
+        for (String w : docFile) {
+            if (hotWordFrequency.containsKey(w.toLowerCase()) == true) {
+                hotWordsInDocFile.add(w);
+            }
+        }
+    }
+    
+    public int count(String hotWord) {
+        calculateFrequency();
+        
+        if (hotWordFrequency.containsKey(hotWord.toLowerCase()) == true)
+            return hotWordFrequency.get(hotWord.toLowerCase());
+        else
+            return -1;
+    }
+    
+    public int distinctCount() {        
+        calculateFrequency();
+        
+        int distinct = 0;
+    
+        for (String key : hotWordFrequency.keySet()) {
+            if (hotWordFrequency.get(key.toLowerCase()) != 0)
+                distinct++;
+        }
+        
+        return distinct;
+    }
+    
+    public String[] nextHotWords(String hotWord) {
+        extractHotWords();
+        
+        if ((hotWordsInDocFile.size() == 1) || (hotWordFrequency.get(hotWord.toLowerCase()) == null) || (hotWordFrequency.get(hotWord.toLowerCase()) == 0))
+        	return null;
+        
+        int i = 0;
+        
+        List<String> result = new ArrayList<String>();
+        
+        while (i < hotWordsInDocFile.size()) {
+        	if ((i+1 < hotWordsInDocFile.size()) && hotWordsInDocFile.get(i).toLowerCase().equals(hotWord.toLowerCase())) {
+        		result.add(hotWordsInDocFile.get(i+1));
+        	}
+        	i++;
+        }
+        
+        String[] ret = new String [result.size()];
+            
+        for (i = 0; i < result.size(); i++) {
+            ret[i] = hotWordOriginal.get(result.get(i).toLowerCase());
+        }
+        return ret;
+    }
+    
+    public String[] prevHotWords(String hotWord) {
+        extractHotWords();
+        
+        if ((hotWordsInDocFile.size() == 1) || (hotWordFrequency.get(hotWord.toLowerCase()) == null) || (hotWordFrequency.get(hotWord.toLowerCase()) == 0))
+        	return null;
+        
+        int i = 0;
+        
+        List<String> result = new ArrayList<String>();
+        
+        while (i < hotWordsInDocFile.size()) {
+        	if ((i-1 >= 0) && hotWordsInDocFile.get(i).toLowerCase().equals(hotWord.toLowerCase())) {
+        		result.add(hotWordsInDocFile.get(i-1));
+        	}
+        	i++;
+        }
+        
+        String[] ret = new String [result.size()];
+        
+        for (i = 0; i < result.size(); i++) {
+        	ret[i] = hotWordOriginal.get(result.get(i).toLowerCase());
+        }
+        return ret;
+        
+        
+    }
+    
+    public String[] topHotWords(int count) {
+        if (count <= 0) {
+            count = 1;
+        } else if (count > distinctCount()){
+            count = distinctCount();
+        }
+        
+        calculateFrequency();
+        extractHotWords();
+        
+        // convert the hash map into a tree map to sort
+        TreeMap<String, Integer> hotWordTreeMap = new TreeMap<String, Integer>(new myComparator());
+        hotWordTreeMap.putAll(hotWordFrequency);
+        
+        List<Map.Entry<String, Integer>> mapToList = new ArrayList<Map.Entry<String, Integer>>(hotWordTreeMap.entrySet());
+        String[] result = new String[count];
+        for (int i = 0; i < count; i++) {
+            result[i] = hotWordOriginal.get(mapToList.get(i).getKey());
+        }
+        
+        return result;
+    }
+    
+    
+    
+    public static void main(String[] args) throws IOException{
+
+        HotWordsAnalyzer A = new HotWordsAnalyzer("paHotWord.txt", "paTest.txt");
+        int x = A.count();
+        x = A.count("");
+        //x = A.distinctCount();
+        System.out.println(x);
+
+        String[] B = A.nextHotWords("xsl");
+        B = A.prevHotWords("xml");
+        //int y = HotWordsAnalyzer.find("in");
+        //System.out.println(y);
+        
+        B = A.prevHotWords("in");
+        
+        B = A.topHotWords(1);
+        
+        if(B == null)
+        	System.out.println("Null");
+        else 
+        	print(B);
+        
+        boolean con;
+        con = A.consecutive("XML","XSL");
+        System.out.println(con);
+        con = A.consecutive("XSL","XSL");
+        System.out.println(con);
+        
+     }
+    
+    public static void print(String[] S) {
+        for (int i = 0; i < S.length; i++) {
+            System.out.println(S[i]);
+        }
+    }
+    
+    public static int find(String s) {
+        int i = 0;
+        while (i < hotWordsInDocFile.size() && !hotWordsInDocFile.get(i).toLowerCase().equals(s))
+            i++;
+        
+        return i;
+    }
+    
+    public static List<Integer> findAll(String s) {
+        List<Integer> index = new ArrayList<>(); 
+        int i = 0;
+        while (i < hotWordsInDocFile.size()) {
+            if (hotWordsInDocFile.get(i).equals(s))
+                index.add(i);
+            i++;
+        }
+        return index;
+    }
+    
+    public boolean consecutive(String... hotWords) {
+        
+        // find each one of the hotWords[0]. and then check the words behind.
+        List<Integer> index = findAll(hotWords[0]);
+        
+        if (index.size() == 0) {
+            return false;
+        } else if (index.get(0) + hotWords.length - 1 > hotWordsInDocFile.size() - 1) {
+            return false;
+        }
+        
+        
+        for (int i = 0; i < index.size(); i++) {
+            if (index.get(i) + hotWords.length - 1 < hotWordsInDocFile.size()) {
+            	 boolean answer = true;
+            	 
+                // check whether the words match
+                for (int j = 0; j < hotWords.length; j++) {
+                    if (!hotWords[j].toLowerCase().equals(hotWordsInDocFile.get(j + i).toLowerCase()))
+                        answer = false;
+                }
+                if (answer == true) 
+                    return true;
+            } 
+        }
+        return false;
+    }
+}
+
+
+class myComparator implements Comparator<String>{
+    
+    @Override
+    public int compare(String s1, String s2) {
+        s1 = s1.toLowerCase();
+        s2 = s2.toLowerCase();
+        
+        if(HotWordsAnalyzer.hotWordFrequency.get(s1) > HotWordsAnalyzer.hotWordFrequency.get(s2)){
+            return -1;
+        }else if (HotWordsAnalyzer.hotWordFrequency.get(s1) < HotWordsAnalyzer.hotWordFrequency.get(s2)){
+            return 1;
+        } else if (HotWordsAnalyzer.find(s1) < HotWordsAnalyzer.find(s2)){
+            return -1;
+        } else
+            return 1;
+    }
+}
+
+

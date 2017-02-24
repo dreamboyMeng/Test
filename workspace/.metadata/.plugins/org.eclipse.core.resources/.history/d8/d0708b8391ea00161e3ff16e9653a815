@@ -1,0 +1,147 @@
+package cs56pa2;
+
+import java.io.BufferedReader;
+
+import java.io.FileNotFoundException;
+
+import java.io.FileReader;
+
+import java.io.IOException;
+
+import java.io.InputStream;
+
+import java.util.ArrayList;
+
+import java.util.Enumeration;
+
+import java.util.Hashtable;
+
+import java.util.List;
+
+import java.util.Scanner;
+
+
+import javax.sound.midi.VoiceStatus;
+
+import javax.xml.ws.Holder;
+
+
+public class HotWordsAnalyzer {
+
+	
+
+	// count returns the total number of hot words in the document
+
+	
+	private Hashtable<String, Integer> hotWordFrequency = new Hashtable<String, Integer>();
+	
+	private List<String> docFile = new ArrayList<>();
+	
+	private List<String> hotWords = new ArrayList<>();
+	
+	
+	public HotWordsAnalyzer (String hotWordsFileName, String docFileName) throws IOException {
+
+		Scanner input = new Scanner(System.in);
+
+		FileReader fileReader = new FileReader(hotWordsFileName);
+
+		BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+		String thisLine = null;
+
+		
+
+		// read in the file of hot words and store them in a hash table. 
+
+		
+
+		while ((thisLine = bufferedReader.readLine()) != null) {
+
+			if (hotWordFrequency.get(thisLine) == null) {
+
+				hotWordFrequency.put(thisLine.toLowerCase(), 0);
+
+			}
+
+		}
+
+		
+
+		// read in the doc file and store all the words in an array of strings.
+
+		fileReader = new FileReader(docFileName);
+
+		bufferedReader = new BufferedReader(fileReader);
+
+		
+
+		thisLine = null;
+
+		while ((thisLine = bufferedReader.readLine()) != null) {
+
+			thisLine.replaceAll("[\\s+,+.+:+;+(+)+\\n+\'+\"+]+", "!");
+
+			for (String w: thisLine.split("[\\s+,+\\.+:+;+(+)+\\n+\\'+\\\"+]+",0)) {
+
+				if (w.length() > 0)
+
+					docFile.add(w);
+
+			}
+
+		}
+
+		
+
+		//test reading the hot words
+
+		Enumeration<String> e = hotWordFrequency.keys(); 
+
+		while(e.hasMoreElements()) {
+
+			String param = (String) e.nextElement();
+
+			System.out.println(param);
+
+		}
+
+		
+
+		// test reading the doc file
+
+		for (String temp : docFile) {
+
+			System.out.println(temp);
+
+		}
+
+	}
+
+	
+
+	public int count() {
+
+		int numHotWords = 0;
+		
+		for (String w : docFile) {
+			
+			if (hotWordFrequency.containsKey(w.toLowerCase()) == true)
+				numHotWords++;
+		}
+
+		return numHotWords;
+
+	}
+
+	
+
+	public static void main(String[] args) throws IOException{
+
+		HotWordsAnalyzer A = new HotWordsAnalyzer("myHotWord.txt", "myTest.txt");
+		int x = A.count();
+		System.out.println(x);
+
+ 	}
+
+}

@@ -1,0 +1,47 @@
+import java.util.Scanner;
+
+import org.w3c.dom.css.Counter;
+
+public class Test {
+	public static void main(String[] args) {
+		int PLAYER = 1; // PLAYER = 1 or 2
+		TicTacToe game = new TicTacToe();
+		game.clearBoard();
+		int indice[] = new int[2];
+		
+		Scanner in = new Scanner(System.in);
+	
+		while (true) {
+			if (PLAYER == 1) {
+				indice = game.moveByRandom();
+				game.setCell(indice[0], indice[1], Cell.X);
+			} else {
+				int x, y;
+				x = in.nextInt();
+				y = in.nextInt();
+				game.setCell(x, y, Cell.O);
+			}
+			game.showBoard();
+			
+			if (game.gameEnd()){
+				if (game.counter == 0) {
+					if(game.scoreOfRandom() > game.scoreOfHuman()) {
+						System.out.println("Computer wins");
+					} else 
+						System.out.println("Human wins");
+				} else {
+					if (PLAYER == 1)
+						System.out.println("Computer wins");
+					else 
+						System.out.println("Human wins");
+				}
+				break;
+			}
+			
+			if (PLAYER == 1)
+				PLAYER = 2;
+			else 
+				PLAYER = 1;
+		}
+	}
+}
